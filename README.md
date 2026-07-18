@@ -32,6 +32,7 @@ go build -o codex-imagegen-mcp .
 |---|---|---|
 | `CODEX_BIN` | `codex` | Path to the codex CLI binary |
 | `CODEX_IMAGEGEN_SESSIONS_DIR` | `~/.codex/sessions` | Where codex stores its session rollouts |
+| `CODEX_IMAGEGEN_IMAGES_DIR` | `~/.codex/generated_images` | Where newer Codex versions store generated PNG files |
 | `CODEX_IMAGEGEN_TIMEOUT` | `180s` | Max time to wait for a single image generation |
 | `CODEX_IMAGEGEN_MANIFEST` | `~/.codex-imagegen-mcp/manifest.jsonl` | JSONL file for recent-images tracking |
 | `CODEX_IMAGEGEN_DEFAULT_EFFORT` | `low` | Default reasoning effort (minimal/low/default/medium/high/xhigh) |

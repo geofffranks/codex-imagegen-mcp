@@ -36,8 +36,12 @@ func buildArgs(o RunOpts) []string {
 	if o.Model != "" {
 		args = append(args, "-m", o.Model)
 	}
-	if o.Effort != "" && o.Effort != "default" {
-		args = append(args, "-c", "model_reasoning_effort="+o.Effort)
+	effort := o.Effort
+	if effort == "minimal" {
+		effort = "low"
+	}
+	if effort != "" && effort != "default" {
+		args = append(args, "-c", "model_reasoning_effort="+effort)
 	}
 	// codex exec takes the whole prompt as ONE positional argument; "$imagegen"
 	// is parsed by codex's skill system, not a shell. Passing it as a single

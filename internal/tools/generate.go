@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
@@ -73,18 +74,25 @@ func (d *Deps) GenerateImage(ctx context.Context, _ *mcp.CallToolRequest, in Gen
 		return nil, GenerateOutput{}, runErr
 	}
 
-	// Image bytes live in the session rollout, not stdout. Locate it by thread_id.
-	rollout, err := codex.FindRollout(d.Cfg.SessionsDir, res.ThreadID, res.StartedAt)
-	if err != nil {
-		return nil, noImage(res, "could not locate codex rollout: "+err.Error()), nil
+	// Newer Codex versions write generated images as files under
+	// generated_images/<thread-id>; older versions embedded base64 PNG bytes in
+	// the session rollout, so retain that path as a compatibility fallback.
+	var png []byte
+	var err error
+	if imagePath, imageErr := codex.FindGeneratedImage(ctx, d.Cfg.GeneratedImagesDir, res.ThreadID, res.StartedAt, 5*time.Second); imageErr == nil {
+		png, err = os.ReadFile(imagePath)
+	} else {
+		rollout, rolloutErr := codex.FindRollout(d.Cfg.SessionsDir, res.ThreadID, res.StartedAt)
+		if rolloutErr != nil {
+			return nil, noImage(res, "could not locate codex output: "+imageErr.Error()+"; "+rolloutErr.Error()), nil
+		}
+		f, openErr := os.Open(rollout)
+		if openErr != nil {
+			return nil, GenerateOutput{}, openErr
+		}
+		defer f.Close()
+		png, err = codex.ExtractPNG(f)
 	}
-	f, err := os.Open(rollout)
-	if err != nil {
-		return nil, GenerateOutput{}, err
-	}
-	defer f.Close()
-
-	png, err := codex.ExtractPNG(f)
 	if err != nil {
 		// No image: surface the agent's own explanation instead of a bare failure.
 		return nil, noImage(res, "codex returned no image"), nil

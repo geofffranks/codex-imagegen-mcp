@@ -26,6 +26,16 @@ func TestParseThreadID(t *testing.T) {
 	}
 }
 
+func TestBuildArgsMapsMinimalEffortToLow(t *testing.T) {
+	got := buildArgs(RunOpts{Prompt: "x", Workdir: "/w", Effort: "minimal"})
+	if !slices.Contains(got, "model_reasoning_effort=low") {
+		t.Fatalf("minimal effort should map to low: %v", got)
+	}
+	if slices.Contains(got, "model_reasoning_effort=minimal") {
+		t.Fatalf("unsupported minimal effort was passed through: %v", got)
+	}
+}
+
 func TestBuildArgsModelAndDefaultEffort(t *testing.T) {
 	got := buildArgs(RunOpts{Prompt: "x", Workdir: "/w", Model: "gpt-5", Effort: "default"})
 	// effort "default" must NOT add a -c flag

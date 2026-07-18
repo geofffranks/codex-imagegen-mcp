@@ -27,6 +27,9 @@ func TestLoadDefaults(t *testing.T) {
 	if c.SessionsDir != "/tmp/fakehome/sessions" {
 		t.Errorf("SessionsDir = %q, want /tmp/fakehome/sessions", c.SessionsDir)
 	}
+	if c.GeneratedImagesDir != "/tmp/fakehome/generated_images" {
+		t.Errorf("GeneratedImagesDir = %q, want /tmp/fakehome/generated_images", c.GeneratedImagesDir)
+	}
 	if c.DefaultModel != "" {
 		t.Errorf("DefaultModel = %q, want empty", c.DefaultModel)
 	}

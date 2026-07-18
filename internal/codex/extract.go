@@ -3,6 +3,7 @@ package codex
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
@@ -16,6 +17,7 @@ import (
 
 var ErrNoImage = errors.New("no image found in codex output")
 var ErrNoRollout = errors.New("no matching codex rollout file found")
+var ErrNoGeneratedImage = errors.New("no matching generated image file found")
 
 var pngMagic = []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
 
@@ -106,6 +108,60 @@ func PNGDimensions(data []byte) (w, h int, ok bool) {
 // FindRollout locates the codex session rollout for a generation. If threadID is
 // non-empty it returns the rollout-*.jsonl whose filename contains that UUID.
 // Otherwise (fallback) it returns the newest rollout-*.jsonl with mtime >= since.
+func FindGeneratedImage(ctx context.Context, imagesDir, threadID string, since time.Time, poll time.Duration) (string, error) {
+	threadDir := filepath.Join(imagesDir, threadID)
+	deadline := time.NewTimer(poll)
+	defer deadline.Stop()
+	for {
+		if path, err := findGeneratedImageOnce(threadDir, since); err == nil {
+			return path, nil
+		} else if !errors.Is(err, ErrNoGeneratedImage) {
+			return "", err
+		}
+		if poll <= 0 {
+			return "", ErrNoGeneratedImage
+		}
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		case <-deadline.C:
+			return "", ErrNoGeneratedImage
+		case <-time.After(100 * time.Millisecond):
+		}
+	}
+}
+
+func findGeneratedImageOnce(threadDir string, since time.Time) (string, error) {
+	var newest string
+	var newestMod time.Time
+	err := filepath.WalkDir(threadDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			if path == threadDir {
+				return err
+			}
+			return nil
+		}
+		if d.IsDir() || !strings.HasSuffix(strings.ToLower(d.Name()), ".png") {
+			return nil
+		}
+		info, err := d.Info()
+		if err != nil || info.ModTime().Before(since) {
+			return nil
+		}
+		if info.ModTime().After(newestMod) {
+			newestMod, newest = info.ModTime(), path
+		}
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	if newest == "" {
+		return "", ErrNoGeneratedImage
+	}
+	return newest, nil
+}
+
 func FindRollout(sessionsDir, threadID string, since time.Time) (string, error) {
 	var newest string
 	var newestMod time.Time

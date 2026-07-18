@@ -7,22 +7,24 @@ import (
 )
 
 type Config struct {
-	CodexBin      string
-	SessionsDir   string
-	Timeout       time.Duration
-	ManifestPath  string
-	DefaultEffort string
-	DefaultModel  string
+	CodexBin           string
+	SessionsDir        string
+	GeneratedImagesDir string
+	Timeout            time.Duration
+	ManifestPath       string
+	DefaultEffort      string
+	DefaultModel       string
 }
 
 func Load() Config {
 	return Config{
-		CodexBin:      envOr("CODEX_BIN", "codex"),
-		SessionsDir:   envOr("CODEX_IMAGEGEN_SESSIONS_DIR", defaultSessionsDir()),
-		Timeout:       envDuration("CODEX_IMAGEGEN_TIMEOUT", 180*time.Second),
-		ManifestPath:  envOr("CODEX_IMAGEGEN_MANIFEST", defaultManifest()),
-		DefaultEffort: envOr("CODEX_IMAGEGEN_DEFAULT_EFFORT", "low"),
-		DefaultModel:  os.Getenv("CODEX_IMAGEGEN_DEFAULT_MODEL"),
+		CodexBin:           envOr("CODEX_BIN", "codex"),
+		SessionsDir:        envOr("CODEX_IMAGEGEN_SESSIONS_DIR", defaultSessionsDir()),
+		GeneratedImagesDir: envOr("CODEX_IMAGEGEN_IMAGES_DIR", defaultGeneratedImagesDir()),
+		Timeout:            envDuration("CODEX_IMAGEGEN_TIMEOUT", 180*time.Second),
+		ManifestPath:       envOr("CODEX_IMAGEGEN_MANIFEST", defaultManifest()),
+		DefaultEffort:      envOr("CODEX_IMAGEGEN_DEFAULT_EFFORT", "low"),
+		DefaultModel:       os.Getenv("CODEX_IMAGEGEN_DEFAULT_MODEL"),
 	}
 }
 
@@ -54,6 +56,18 @@ func envDuration(key string, def time.Duration) time.Duration {
 		}
 	}
 	return def
+}
+
+func defaultGeneratedImagesDir() string {
+	home := os.Getenv("CODEX_HOME")
+	if home == "" {
+		var err error
+		home, err = os.UserHomeDir()
+		if err != nil {
+			return filepath.Join(".codex", "generated_images")
+		}
+	}
+	return filepath.Join(home, "generated_images")
 }
 
 func defaultManifest() string {

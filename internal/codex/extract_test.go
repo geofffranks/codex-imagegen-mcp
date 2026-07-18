@@ -2,6 +2,7 @@ package codex
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"errors"
 	"os"
@@ -124,5 +125,25 @@ func TestFindRolloutNewestSinceFallback(t *testing.T) {
 	}
 	if got != newer {
 		t.Fatalf("FindRollout = %q; want %q (newest)", got, newer)
+	}
+}
+
+func TestFindGeneratedImageByThreadID(t *testing.T) {
+	dir := t.TempDir()
+	threadID := "019f76f6-1fce-7e73-8c2a-69da5b6bc704"
+	threadDir := filepath.Join(dir, threadID)
+	if err := os.MkdirAll(threadDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(threadDir, "exec-9b861469-7868-4f54-8c88-8b03183c99f3.png")
+	if err := os.WriteFile(want, onePxPNG, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got, err := FindGeneratedImage(context.Background(), dir, threadID, time.Now().Add(-time.Minute), 0)
+	if err != nil {
+		t.Fatalf("FindGeneratedImage: %v", err)
+	}
+	if got != want {
+		t.Fatalf("FindGeneratedImage = %q; want %q", got, want)
 	}
 }
