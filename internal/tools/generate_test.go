@@ -69,3 +69,60 @@ func TestNoImageFallsBackToStderr(t *testing.T) {
 		t.Fatalf("message should include fallback + stderr; got %q", out.Message)
 	}
 }
+
+func TestBuildPromptReferenceBlock(t *testing.T) {
+	got := buildPrompt("draw a dragon", []string{"/r1.png", "/r2.png"}, "")
+	if !strings.HasPrefix(got, "draw a dragon") {
+		t.Fatalf("original prompt must come first: %q", got)
+	}
+	if !strings.Contains(got, "Reference images are attached") {
+		t.Fatalf("missing reference instruction: %q", got)
+	}
+	if !strings.Contains(got, "Do not edit or modify them") {
+		t.Fatalf("missing do-not-edit guidance: %q", got)
+	}
+}
+
+func TestBuildPromptAspectRatioHint(t *testing.T) {
+	cases := map[string]string{
+		"16:9": "wide 16:9 landscape",
+		"9:16": "tall 9:16 portrait",
+		"1:1":  "square 1:1",
+		"4:3":  "4:3 landscape",
+		"3:4":  "3:4 portrait",
+	}
+	for ratio, wantFrag := range cases {
+		got := buildPrompt("a hillside", nil, ratio)
+		if !strings.Contains(got, wantFrag) {
+			t.Fatalf("ratio %q: expected %q in prompt: %q", ratio, wantFrag, got)
+		}
+	}
+	// Unknown ratio falls back to generic mention.
+	got := buildPrompt("a hillside", nil, "21:9")
+	if !strings.Contains(got, "21:9 aspect ratio") {
+		t.Fatalf("unknown ratio should appear generically: %q", got)
+	}
+}
+
+func TestBuildPromptNoAugmentationWhenEmpty(t *testing.T) {
+	got := buildPrompt("just a prompt", nil, "")
+	if got != "just a prompt" {
+		t.Fatalf("expected unchanged prompt, got %q", got)
+	}
+}
+
+func TestGenerateImageRejectsMissingReferenceImage(t *testing.T) {
+	d := &Deps{}
+	in := GenerateInput{
+		Prompt:          "a dragon",
+		Out:             filepath.Join(t.TempDir(), "out.png"),
+		ReferenceImages: []string{"/nonexistent/ref.png"},
+	}
+	_, _, err := d.GenerateImage(context.Background(), nil, in)
+	if err == nil {
+		t.Fatal("expected error for missing reference image")
+	}
+	if !strings.Contains(err.Error(), "/nonexistent/ref.png") {
+		t.Fatalf("error should name the missing path: %v", err)
+	}
+}

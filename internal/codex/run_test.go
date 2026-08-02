@@ -36,6 +36,22 @@ func TestBuildArgsMapsMinimalEffortToLow(t *testing.T) {
 	}
 }
 
+func TestBuildArgsImagesViaDashI(t *testing.T) {
+	got := buildArgs(RunOpts{Prompt: "a cat", Workdir: "/w", Images: []string{"/r1.png", "/r2.png"}})
+	want := []string{"exec", "--json", "--skip-git-repo-check", "-C", "/w",
+		"-i", "/r1.png", "-i", "/r2.png", "$imagegen a cat"}
+	if !slices.Equal(got, want) {
+		t.Fatalf("buildArgs = %v\nwant %v", got, want)
+	}
+}
+
+func TestBuildArgsNoImagesNoDashI(t *testing.T) {
+	got := buildArgs(RunOpts{Prompt: "x", Workdir: "/w"})
+	if slices.Contains(got, "-i") {
+		t.Fatalf("expected no -i flags without images: %v", got)
+	}
+}
+
 func TestBuildArgsModelAndDefaultEffort(t *testing.T) {
 	got := buildArgs(RunOpts{Prompt: "x", Workdir: "/w", Model: "gpt-5", Effort: "default"})
 	// effort "default" must NOT add a -c flag

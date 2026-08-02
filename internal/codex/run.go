@@ -18,6 +18,7 @@ type RunOpts struct {
 	Model   string
 	Effort  string
 	Workdir string
+	Images  []string
 	Timeout time.Duration
 }
 
@@ -42,6 +43,9 @@ func buildArgs(o RunOpts) []string {
 	}
 	if effort != "" && effort != "default" {
 		args = append(args, "-c", "model_reasoning_effort="+effort)
+	}
+	for _, img := range o.Images {
+		args = append(args, "-i", img)
 	}
 	// codex exec takes the whole prompt as ONE positional argument; "$imagegen"
 	// is parsed by codex's skill system, not a shell. Passing it as a single

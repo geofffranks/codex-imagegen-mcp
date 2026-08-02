@@ -27,3 +27,29 @@ func TestReadRecentMissingFile(t *testing.T) {
 		t.Fatalf("missing manifest should yield empty, got %v err=%v", recs, err)
 	}
 }
+
+func TestAppendAndReadRecentWithReferences(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "manifest.jsonl")
+	rec := Record{
+		Path: "out.png", Prompt: "a dragon", Timestamp: "2026-08-02T00:00:00Z",
+		Width: 1024, Height: 1024, Bytes: 5000,
+		ReferenceImages: []string{"/r1.png", "/r2.png"}, AspectRatio: "16:9",
+	}
+	if err := Append(p, rec); err != nil {
+		t.Fatal(err)
+	}
+	recs, err := ReadRecent(p, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(recs) != 1 {
+		t.Fatalf("expected 1 record, got %d", len(recs))
+	}
+	got := recs[0]
+	if len(got.ReferenceImages) != 2 || got.ReferenceImages[0] != "/r1.png" || got.ReferenceImages[1] != "/r2.png" {
+		t.Fatalf("reference images not round-tripped: %v", got.ReferenceImages)
+	}
+	if got.AspectRatio != "16:9" {
+		t.Fatalf("aspect ratio not round-tripped: %v", got.AspectRatio)
+	}
+}

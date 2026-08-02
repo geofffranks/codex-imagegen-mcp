@@ -15,12 +15,14 @@ import (
 var appendMu sync.Mutex
 
 type Record struct {
-	Path      string `json:"path"`
-	Prompt    string `json:"prompt"`
-	Timestamp string `json:"timestamp"`
-	Width     int    `json:"width"`
-	Height    int    `json:"height"`
-	Bytes     int    `json:"bytes"`
+	Path            string   `json:"path"`
+	Prompt          string   `json:"prompt"`
+	Timestamp       string   `json:"timestamp"`
+	Width           int      `json:"width"`
+	Height          int      `json:"height"`
+	Bytes           int      `json:"bytes"`
+	ReferenceImages []string `json:"reference_images,omitempty"`
+	AspectRatio     string   `json:"aspect_ratio,omitempty"`
 }
 
 func Append(path string, r Record) error {

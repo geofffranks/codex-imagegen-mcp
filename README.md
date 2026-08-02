@@ -55,6 +55,8 @@ Generate a PNG image from a text prompt using Codex's `$imagegen` skill.
 - `model` (string) — codex model override
 - `effort` (string) — reasoning effort: `minimal`, `low`, `default`, `medium`, `high`, or `xhigh`
 - `workdir` (string) — codex working directory; defaults to a temp dir
+- `reference_images` (string[]) — local file paths of reference images to attach as vision input. Images are sent to the model via codex's `-i` flag as actual image tokens, not merely mentioned in the prompt. All paths are validated to exist before codex runs.
+- `aspect_ratio` (string) — best-effort aspect ratio hint (e.g. `16:9`, `1:1`, `4:3`). Translated into framing guidance in the prompt. The built-in image generation tool does not accept an explicit size parameter, so this is advisory only.
 
 **Example:**
 ```json
@@ -67,6 +69,21 @@ Generate a PNG image from a text prompt using Codex's `$imagegen` skill.
   }
 }
 ```
+
+**Example with reference images:**
+```json
+{
+  "name": "generate_image",
+  "arguments": {
+    "prompt": "a dragon perched on a cliff in the style of the reference images",
+    "out": "/tmp/dragon.png",
+    "reference_images": ["/tmp/style-ref-1.png", "/tmp/style-ref-2.png"],
+    "aspect_ratio": "16:9"
+  }
+}
+```
+
+The response includes a `reference_images` field echoing back the paths that were attached as vision input.
 
 ### `check_codex`
 

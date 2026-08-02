@@ -17,7 +17,7 @@ func main() {
 	server := mcp.NewServer(&mcp.Implementation{Name: "codex-imagegen-mcp", Version: "0.1.0"}, nil)
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "generate_image",
-		Description: "Generate a PNG image from a text prompt using Codex's built-in $imagegen skill, saving it to the given 'out' path.",
+		Description: "Generate a PNG image from a text prompt using Codex's built-in $imagegen skill, saving it to the given 'out' path. Optional reference_images are attached as actual vision input via codex's -i flag.",
 	}, d.GenerateImage)
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "check_codex",
