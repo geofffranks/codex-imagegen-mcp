@@ -36,7 +36,6 @@ go build -o codex-imagegen-mcp .
 | `CODEX_IMAGEGEN_TIMEOUT` | `180s` | Max time to wait for a single image generation |
 | `CODEX_IMAGEGEN_MANIFEST` | `~/.codex-imagegen-mcp/manifest.jsonl` | JSONL file for recent-images tracking |
 | `CODEX_IMAGEGEN_DEFAULT_EFFORT` | `low` | Default reasoning effort (minimal/low/default/medium/high/xhigh) |
-| `CODEX_IMAGEGEN_DEFAULT_MODEL` | _(unset)_ | Default codex model override |
 | `CODEX_HOME` | _(unset)_ | Override codex home directory |
 
 ## Tools
@@ -52,8 +51,7 @@ Generate a PNG image from a text prompt using Codex's `$imagegen` skill.
 
 **Optional inputs:**
 
-- `model` (string) — codex model override
-- `effort` (string) — reasoning effort: `minimal`, `low`, `default`, `medium`, `high`, or `xhigh`
+- `effort` (string) — reasoning effort: `minimal`, `low`, `default`, `medium`, `high`, or `xhigh`. Codex model selection is always delegated to the authenticated Codex account default.
 - `workdir` (string) — codex working directory; defaults to a temp dir
 - `reference_images` (string[]) — local file paths of reference images to attach as vision input. Images are sent to the model via codex's `-i` flag as actual image tokens, not merely mentioned in the prompt. All paths are validated to exist before codex runs.
 - `aspect_ratio` (string) — best-effort aspect ratio hint (e.g. `16:9`, `1:1`, `4:3`). Translated into framing guidance in the prompt. The built-in image generation tool does not accept an explicit size parameter, so this is advisory only.

@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"syscall"
@@ -13,13 +14,13 @@ import (
 )
 
 type RunOpts struct {
-	Bin     string
-	Prompt  string
-	Model   string
-	Effort  string
-	Workdir string
-	Images  []string
-	Timeout time.Duration
+	Bin               string
+	Prompt            string
+	Effort            string
+	Workdir           string
+	Images            []string
+	OutputLastMessage string
+	Timeout           time.Duration
 }
 
 type RunResult struct {
@@ -31,12 +32,13 @@ type RunResult struct {
 	TimedOut    bool
 }
 
+func emptyStdin() io.Reader {
+	return bytes.NewReader(nil)
+}
+
 func buildArgs(o RunOpts) []string {
 	// No --ephemeral: the rollout must be written so the image bytes are reachable.
 	args := []string{"exec", "--json", "--skip-git-repo-check", "-C", o.Workdir}
-	if o.Model != "" {
-		args = append(args, "-m", o.Model)
-	}
 	effort := o.Effort
 	if effort == "minimal" {
 		effort = "low"
@@ -50,6 +52,13 @@ func buildArgs(o RunOpts) []string {
 	// codex exec takes the whole prompt as ONE positional argument; "$imagegen"
 	// is parsed by codex's skill system, not a shell. Passing it as a single
 	// argv element is deliberate and spike-verified — do NOT split on spaces.
+	// The -- delimiter is required because --image accepts a variadic list and
+	// otherwise consumes the prompt as another image argument. All options must
+	// come before -- because everything after it is the positional prompt.
+	if o.OutputLastMessage != "" {
+		args = append(args, "-o", o.OutputLastMessage)
+	}
+	args = append(args, "--")
 	return append(args, "$imagegen "+o.Prompt)
 }
 
@@ -84,10 +93,11 @@ func Run(ctx context.Context, o RunOpts) (*RunResult, error) {
 	lastMsgFile.Close()
 	defer os.Remove(lastMsgFile.Name())
 
+	o.OutputLastMessage = lastMsgFile.Name()
 	started := time.Now()
-	args := append(buildArgs(o), "-o", lastMsgFile.Name())
+	args := buildArgs(o)
 	cmd := exec.CommandContext(ctx, o.Bin, args...)
-	cmd.Stdin = nil                                       // nil stdin => /dev/null; codex hangs on an open pipe
+	cmd.Stdin = emptyStdin()                              // explicit EOF; codex probes stdin for additional input
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true} // own process group
 	cmd.Cancel = func() error {                           // kill the whole group on timeout
 		if cmd.Process == nil {

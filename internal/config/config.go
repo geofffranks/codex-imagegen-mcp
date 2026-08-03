@@ -13,7 +13,6 @@ type Config struct {
 	Timeout            time.Duration
 	ManifestPath       string
 	DefaultEffort      string
-	DefaultModel       string
 }
 
 func Load() Config {
@@ -24,7 +23,6 @@ func Load() Config {
 		Timeout:            envDuration("CODEX_IMAGEGEN_TIMEOUT", 180*time.Second),
 		ManifestPath:       envOr("CODEX_IMAGEGEN_MANIFEST", defaultManifest()),
 		DefaultEffort:      envOr("CODEX_IMAGEGEN_DEFAULT_EFFORT", "low"),
-		DefaultModel:       os.Getenv("CODEX_IMAGEGEN_DEFAULT_MODEL"),
 	}
 }
 

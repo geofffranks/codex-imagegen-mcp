@@ -1,6 +1,8 @@
 package codex
 
 import (
+	"io"
+	"reflect"
 	"slices"
 	"testing"
 )
@@ -9,7 +11,7 @@ func TestBuildArgs(t *testing.T) {
 	got := buildArgs(RunOpts{Prompt: "a red apple", Workdir: "/tmp/wd", Effort: "low"})
 	// NOTE: no --ephemeral — the rollout must be written so the image is reachable.
 	want := []string{"exec", "--json", "--skip-git-repo-check",
-		"-C", "/tmp/wd", "-c", "model_reasoning_effort=low", "$imagegen a red apple"}
+		"-C", "/tmp/wd", "-c", "model_reasoning_effort=low", "--", "$imagegen a red apple"}
 	if !slices.Equal(got, want) {
 		t.Fatalf("buildArgs = %v\nwant %v", got, want)
 	}
@@ -37,9 +39,12 @@ func TestBuildArgsMapsMinimalEffortToLow(t *testing.T) {
 }
 
 func TestBuildArgsImagesViaDashI(t *testing.T) {
-	got := buildArgs(RunOpts{Prompt: "a cat", Workdir: "/w", Images: []string{"/r1.png", "/r2.png"}})
+	got := buildArgs(RunOpts{
+		Prompt: "a cat", Workdir: "/w", Images: []string{"/r1.png", "/r2.png"},
+		OutputLastMessage: "/tmp/last-message.txt",
+	})
 	want := []string{"exec", "--json", "--skip-git-repo-check", "-C", "/w",
-		"-i", "/r1.png", "-i", "/r2.png", "$imagegen a cat"}
+		"-i", "/r1.png", "-i", "/r2.png", "-o", "/tmp/last-message.txt", "--", "$imagegen a cat"}
 	if !slices.Equal(got, want) {
 		t.Fatalf("buildArgs = %v\nwant %v", got, want)
 	}
@@ -52,13 +57,29 @@ func TestBuildArgsNoImagesNoDashI(t *testing.T) {
 	}
 }
 
+func TestEmptyStdinIsExplicitEOF(t *testing.T) {
+	stdin := emptyStdin()
+	if stdin == nil {
+		t.Fatal("empty stdin must be an explicit reader")
+	}
+	if got, err := stdin.Read(make([]byte, 1)); got != 0 || err != io.EOF {
+		t.Fatalf("empty reader should return EOF, got n=%d err=%v", got, err)
+	}
+}
+
 func TestBuildArgsModelAndDefaultEffort(t *testing.T) {
-	got := buildArgs(RunOpts{Prompt: "x", Workdir: "/w", Model: "gpt-5", Effort: "default"})
+	got := buildArgs(RunOpts{Prompt: "x", Workdir: "/w", Effort: "default"})
 	// effort "default" must NOT add a -c flag
 	if slices.Contains(got, "model_reasoning_effort=default") {
 		t.Fatal("default effort should not be passed")
 	}
-	if i := slices.Index(got, "-m"); i < 0 || got[i+1] != "gpt-5" {
-		t.Fatalf("model flag missing in %v", got)
+	if slices.Contains(got, "-m") {
+		t.Fatalf("model selection must never be passed: %v", got)
+	}
+}
+
+func TestRunOptsHasNoModelSelection(t *testing.T) {
+	if _, ok := reflect.TypeOf(RunOpts{}).FieldByName("Model"); ok {
+		t.Fatal("RunOpts must not expose model selection")
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -34,6 +35,12 @@ func TestWritePNGCreatesDirsAndReportsDims(t *testing.T) {
 }
 
 // GenerateImage must reject empty prompt/out before ever invoking codex.
+func TestGenerateInputHasNoModelSelection(t *testing.T) {
+	if _, ok := reflect.TypeOf(GenerateInput{}).FieldByName("Model"); ok {
+		t.Fatal("GenerateInput must not expose model selection")
+	}
+}
+
 func TestGenerateImageRequiresPromptAndOut(t *testing.T) {
 	d := &Deps{}
 	for _, in := range []GenerateInput{

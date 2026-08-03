@@ -17,7 +17,6 @@ import (
 type GenerateInput struct {
 	Prompt          string   `json:"prompt" jsonschema:"the image description to generate"`
 	Out             string   `json:"out" jsonschema:"file path to write the PNG to (absolute, or relative to the server's working directory)"`
-	Model           string   `json:"model,omitempty" jsonschema:"optional codex model override"`
 	Effort          string   `json:"effort,omitempty" jsonschema:"reasoning effort: minimal, low, default, medium, high, or xhigh"`
 	Workdir         string   `json:"workdir,omitempty" jsonschema:"optional codex working directory; defaults to a temp dir"`
 	ReferenceImages []string `json:"reference_images,omitempty" jsonschema:"optional local file paths of reference images to attach as vision input"`
@@ -107,13 +106,9 @@ func (d *Deps) GenerateImage(ctx context.Context, _ *mcp.CallToolRequest, in Gen
 	if effort == "" {
 		effort = d.Cfg.DefaultEffort
 	}
-	model := in.Model
-	if model == "" {
-		model = d.Cfg.DefaultModel
-	}
 
 	res, runErr := codex.Run(ctx, codex.RunOpts{
-		Bin: d.Cfg.CodexBin, Prompt: buildPrompt(in.Prompt, in.ReferenceImages, in.AspectRatio), Model: model,
+		Bin: d.Cfg.CodexBin, Prompt: buildPrompt(in.Prompt, in.ReferenceImages, in.AspectRatio),
 		Effort: effort, Workdir: workdir, Images: in.ReferenceImages, Timeout: d.Cfg.Timeout,
 	})
 	if runErr != nil {
