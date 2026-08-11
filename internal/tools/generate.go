@@ -110,6 +110,7 @@ func (d *Deps) GenerateImage(ctx context.Context, _ *mcp.CallToolRequest, in Gen
 	res, runErr := codex.Run(ctx, codex.RunOpts{
 		Bin: d.Cfg.CodexBin, Prompt: buildPrompt(in.Prompt, in.ReferenceImages, in.AspectRatio),
 		Effort: effort, Workdir: workdir, Images: in.ReferenceImages, Timeout: d.Cfg.Timeout,
+		DangerouslyBypassSandbox: d.Cfg.DangerouslyBypassSandbox,
 	})
 	if runErr != nil {
 		return nil, GenerateOutput{}, runErr

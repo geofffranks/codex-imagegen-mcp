@@ -14,13 +14,14 @@ import (
 )
 
 type RunOpts struct {
-	Bin               string
-	Prompt            string
-	Effort            string
-	Workdir           string
-	Images            []string
-	OutputLastMessage string
-	Timeout           time.Duration
+	Bin                      string
+	Prompt                   string
+	Effort                   string
+	Workdir                  string
+	Images                   []string
+	OutputLastMessage        string
+	Timeout                  time.Duration
+	DangerouslyBypassSandbox bool
 }
 
 type RunResult struct {
@@ -57,6 +58,9 @@ func buildArgs(o RunOpts) []string {
 	// come before -- because everything after it is the positional prompt.
 	if o.OutputLastMessage != "" {
 		args = append(args, "-o", o.OutputLastMessage)
+	}
+	if o.DangerouslyBypassSandbox {
+		args = append(args, "--dangerously-bypass-approvals-and-sandbox")
 	}
 	args = append(args, "--")
 	return append(args, "$imagegen "+o.Prompt)

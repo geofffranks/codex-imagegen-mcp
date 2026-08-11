@@ -13,6 +13,7 @@ func TestLoadDefaults(t *testing.T) {
 	t.Setenv("CODEX_IMAGEGEN_SESSIONS_DIR", "")
 	t.Setenv("CODEX_HOME", "/tmp/fakehome")
 	t.Setenv("CODEX_IMAGEGEN_MANIFEST", "")
+	t.Setenv("CODEX_IMAGEGEN_DANGEROUSLY_BYPASS_SANDBOX", "")
 	c := Load()
 	if c.CodexBin != "codex" {
 		t.Errorf("CodexBin = %q, want codex", c.CodexBin)
@@ -22,6 +23,9 @@ func TestLoadDefaults(t *testing.T) {
 	}
 	if c.DefaultEffort != "low" {
 		t.Errorf("DefaultEffort = %q, want low", c.DefaultEffort)
+	}
+	if c.DangerouslyBypassSandbox {
+		t.Error("DangerouslyBypassSandbox = true, want false by default")
 	}
 	if c.SessionsDir != "/tmp/fakehome/sessions" {
 		t.Errorf("SessionsDir = %q, want /tmp/fakehome/sessions", c.SessionsDir)
@@ -41,11 +45,15 @@ func TestLoadOverrides(t *testing.T) {
 	t.Setenv("CODEX_IMAGEGEN_SESSIONS_DIR", "")
 	t.Setenv("CODEX_HOME", "")
 	t.Setenv("CODEX_IMAGEGEN_MANIFEST", "")
+	t.Setenv("CODEX_IMAGEGEN_DANGEROUSLY_BYPASS_SANDBOX", "true")
 	c := Load()
 	if c.CodexBin != "/opt/homebrew/bin/codex" {
 		t.Errorf("CodexBin = %q", c.CodexBin)
 	}
 	if c.Timeout != 45*time.Second {
 		t.Errorf("Timeout = %v, want 45s", c.Timeout)
+	}
+	if !c.DangerouslyBypassSandbox {
+		t.Error("DangerouslyBypassSandbox = false, want true")
 	}
 }

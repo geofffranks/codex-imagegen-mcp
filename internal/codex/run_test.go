@@ -17,6 +17,22 @@ func TestBuildArgs(t *testing.T) {
 	}
 }
 
+func TestBuildArgsAddsDangerousSandboxBypassWhenEnabled(t *testing.T) {
+	got := buildArgs(RunOpts{Prompt: "a red apple", Workdir: "/tmp/wd", DangerouslyBypassSandbox: true})
+	want := []string{"exec", "--json", "--skip-git-repo-check", "-C", "/tmp/wd",
+		"--dangerously-bypass-approvals-and-sandbox", "--", "$imagegen a red apple"}
+	if !slices.Equal(got, want) {
+		t.Fatalf("buildArgs = %v\nwant %v", got, want)
+	}
+}
+
+func TestBuildArgsOmitsDangerousSandboxBypassWhenDisabled(t *testing.T) {
+	got := buildArgs(RunOpts{Prompt: "a red apple", Workdir: "/tmp/wd"})
+	if slices.Contains(got, "--dangerously-bypass-approvals-and-sandbox") {
+		t.Fatalf("buildArgs = %v, did not want dangerous sandbox bypass flag", got)
+	}
+}
+
 func TestParseThreadID(t *testing.T) {
 	stdout := []byte(`{"type":"thread.started","thread_id":"019f5721-4c3f-7ac1-977e-6668665ff438"}` + "\n" +
 		`{"type":"turn.started"}` + "\n")

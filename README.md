@@ -34,6 +34,7 @@ go build -o codex-imagegen-mcp .
 | `CODEX_IMAGEGEN_SESSIONS_DIR` | `~/.codex/sessions` | Where codex stores its session rollouts |
 | `CODEX_IMAGEGEN_IMAGES_DIR` | `~/.codex/generated_images` | Where newer Codex versions store generated PNG files |
 | `CODEX_IMAGEGEN_TIMEOUT` | `180s` | Max time to wait for a single image generation |
+| `CODEX_IMAGEGEN_DANGEROUSLY_BYPASS_SANDBOX` | `false` | When `true`, pass `--dangerously-bypass-approvals-and-sandbox` to Codex |
 | `CODEX_IMAGEGEN_MANIFEST` | `~/.codex-imagegen-mcp/manifest.jsonl` | JSONL file for recent-images tracking |
 | `CODEX_IMAGEGEN_DEFAULT_EFFORT` | `low` | Default reasoning effort (minimal/low/default/medium/high/xhigh) |
 | `CODEX_HOME` | _(unset)_ | Override codex home directory |
